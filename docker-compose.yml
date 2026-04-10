@@ -5,7 +5,11 @@ services:
       target: dev
     volumes:
       - ./backend/src:/app/src
-    env_file: ./backend/.env
+    environment:
+      - DATABASE_URL=postgres://user:pass@postgres:5432/taskdb
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=changeme_use_a_long_random_string
+      - FRONTEND_URL=http://localhost:5173
     ports:
       - "3001:3001"
     depends_on:
@@ -13,7 +17,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-
   frontend:
     build:
       context: ./frontend
@@ -24,7 +27,6 @@ services:
       - "5173:5173"
     depends_on:
       - backend
-
   postgres:
     image: postgres:16-alpine
     environment:
@@ -37,11 +39,9 @@ services:
       test: ["CMD-SHELL", "pg_isready -U user -d taskdb"]
       interval: 5s
       retries: 5
-
   redis:
     image: redis:7-alpine
     ports:
       - "6379:6379"
-
 volumes:
   pg_data:
