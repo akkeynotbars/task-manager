@@ -21,13 +21,17 @@ authRouter.post('/register', async (req, res) => {
 });
 
 authRouter.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  const { rows } = await db.query('SELECT * FROM users WHERE email=$1', [email]);
-  if (!rows[0]) return res.status(401).json({ error: 'Invalid credentials' });
-  const valid = await bcrypt.compare(password, rows[0].password_hash);
-  if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
-  const token = jwt.sign({ id: rows[0].id, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-  res.json({ token, user: { id: rows[0].id, email: rows[0].email, name: rows[0].name } });
+  try {
+    const { email, password } = req.body;
+    const { rows } = await db.query('SELECT * FROM users WHERE email=$1', [email]);
+    if (!rows[0]) return res.status(401).json({ error: 'Invalid credentials' });
+    const valid = await bcrypt.compare(password, rows[0].password_hash);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+    const token = jwt.sign({ id: rows[0].id, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: rows[0].id, email: rows[0].email, name: rows[0].name } });
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
 });
 
 export function verifyToken(token) {
